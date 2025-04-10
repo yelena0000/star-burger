@@ -1,7 +1,11 @@
+import json
 from django.http import JsonResponse
 from django.templatetags.static import static
+from django.views.decorators.csrf import csrf_exempt
 
 
+from .models import Order
+from .models import OrderItem
 from .models import Product
 
 
@@ -56,7 +60,26 @@ def product_list_api(request):
         'indent': 4,
     })
 
-
+@csrf_exempt
 def register_order(request):
-    # TODO это лишь заглушка
-    return JsonResponse({})
+    #if request.method != 'POST':
+    #    return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    order_details = json.loads(request.body)
+
+    order = Order.objects.create(
+        firstname=order_details['firstname'],
+        lastname=order_details['lastname'],
+        phonenumber=order_details['phonenumber'],
+        address=order_details['address'],
+    )
+
+    for item in order_details['products']:
+        product = Product.objects.get(pk=item['product'])
+        OrderItem.objects.create(
+            order=order,
+            product=product,
+            quantity=item['quantity']
+        )
+
+    return JsonResponse({'order_id': order.id})
