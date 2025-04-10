@@ -2,6 +2,8 @@ import json
 from django.http import JsonResponse
 from django.templatetags.static import static
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 
 from .models import Order
@@ -60,26 +62,23 @@ def product_list_api(request):
         'indent': 4,
     })
 
-@csrf_exempt
+@api_view(['POST'])
 def register_order(request):
-    #if request.method != 'POST':
-    #    return JsonResponse({'error': 'Only POST allowed'}, status=405)
-
-    order_details = json.loads(request.body)
+    order_details = request.data
 
     order = Order.objects.create(
         firstname=order_details['firstname'],
         lastname=order_details['lastname'],
         phonenumber=order_details['phonenumber'],
-        address=order_details['address'],
+        address=order_details['address']
     )
 
     for item in order_details['products']:
-        product = Product.objects.get(pk=item['product'])
+        product = Product.objects.get(id=item['product'])
         OrderItem.objects.create(
             order=order,
             product=product,
             quantity=item['quantity']
         )
 
-    return JsonResponse({'order_id': order.id})
+    return Response({'status': 'ok'})
