@@ -1,5 +1,6 @@
 import json
 import re
+from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
 from django.views.decorators.csrf import csrf_exempt
@@ -75,20 +76,27 @@ def register_order(request):
 
     validated = serializer.validated_data
 
-    order = Order.objects.create(
-        firstname=validated['firstname'].strip(),
-        lastname=validated['lastname'].strip(),
-        phonenumber=validated['phonenumber'].strip(),
-        address=validated['address'].strip()
-    )
+    try:
+        with transaction.atomic():
+            order = Order.objects.create(
+                firstname=validated['firstname'].strip(),
+                lastname=validated['lastname'].strip(),
+                phonenumber=validated['phonenumber'].strip(),
+                address=validated['address'].strip()
+            )
 
-    for item in validated['products']:
-        OrderItem.objects.create(
-            order=order,
-            product=item['product'],
-            quantity=item['quantity'],
-            price=item['product'].price
-        )
+            for item in validated['products']:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item['product'],
+                    quantity=item['quantity'],
+                    price=item['product'].price
+                )
+
+            0 / 0  # Искусственная ошибка
+
+    except Exception as error:
+        return Response({'error': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     response_serializer = OrderSerializer(order)
     return Response(response_serializer.data, status=status.HTTP_201_CREATED)
