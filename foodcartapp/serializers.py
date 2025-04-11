@@ -1,9 +1,13 @@
 from rest_framework import serializers
+
+from .models import Order
 from .models import Product
+
 
 class OrderProductSerializer(serializers.Serializer):
     product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
     quantity = serializers.IntegerField(min_value=1)
+
 
 class RegisterOrderSerializer(serializers.Serializer):
     firstname = serializers.CharField()
@@ -13,3 +17,9 @@ class RegisterOrderSerializer(serializers.Serializer):
     })
     address = serializers.CharField()
     products = OrderProductSerializer(many=True, allow_empty=False)
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['id', 'firstname', 'lastname', 'phonenumber', 'address']

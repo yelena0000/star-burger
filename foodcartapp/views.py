@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from .models import Order
 from .models import OrderItem
 from .models import Product
+from .serializers import OrderSerializer
 from .serializers import RegisterOrderSerializer
 
 
@@ -88,4 +89,5 @@ def register_order(request):
             quantity=item['quantity']
         )
 
-    return Response({'status': 'ok'}, status=status.HTTP_201_CREATED)
+    response_serializer = OrderSerializer(order)
+    return Response(response_serializer.data, status=status.HTTP_201_CREATED)
