@@ -93,8 +93,6 @@ def register_order(request):
                     price=item['product'].price
                 )
 
-            0 / 0  # Искусственная ошибка
-
     except Exception as error:
         return Response({'error': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
