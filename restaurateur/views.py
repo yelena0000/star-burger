@@ -98,9 +98,35 @@ def view_orders(request):
         Order.objects
         .exclude(status=Order.OrderStatus.COMPLETED)
         .with_total_price()
-        .select_related()
+        .select_related('assigned_restaurant')
         .prefetch_related('items__product')
     )
+
+    orders_with_restaurants = []
+
+    for order in orders:
+        order_products = order.items.all()
+
+        available_restaurants = Restaurant.objects.filter(
+            menu_items__product__in=[item.product for item in order_products],
+            menu_items__availability=True
+        ).distinct()
+
+        valid_restaurants = []
+
+        for restaurant in available_restaurants:
+            can_prepare_all = all(
+                restaurant.menu_items.filter(product=item.product, availability=True).exists()
+                for item in order_products
+            )
+            if can_prepare_all:
+                valid_restaurants.append(restaurant)
+
+        orders_with_restaurants.append({
+            'order': order,
+            'restaurants': valid_restaurants
+        })
+
     return render(request, 'order_items.html', context={
-        'order_items': orders,
+        'orders_with_restaurants': orders_with_restaurants,
     })
