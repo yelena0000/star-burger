@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from .models import Order
 from .models import OrderItem
 from .models import Product
+from .serializers import RegisterOrderSerializer
 
 
 def banners_list_api(request):
@@ -67,70 +68,23 @@ def product_list_api(request):
 
 @api_view(['POST'])
 def register_order(request):
-    order_details = request.data
-    errors = {}
+    serializer = RegisterOrderSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    if 'products' not in order_details:
-        errors['products'] = 'Обязательное поле.'
-    else:
-        products = order_details['products']
-        if products is None:
-            errors['products'] = 'Это поле не может быть пустым.'
-        elif not isinstance(products, list):
-            errors['products'] = 'Ожидался list со значениями, но был получен "str".'
-        elif not products:
-            errors['products'] = 'Этот список не может быть пустым.'
-        else:
-            for index, item in enumerate(products):
-                if not isinstance(item, dict):
-                    errors['products'] = f'Элемент #{index+1} должен быть словарём.'
-                    break
-                if 'product' not in item or 'quantity' not in item:
-                    errors['products'] = f'Элемент #{index+1} должен содержать ключи "product" и "quantity".'
-                    break
-                try:
-                    product_id = int(item['product'])
-                    Product.objects.get(id=product_id)
-                except (ValueError, Product.DoesNotExist):
-                    errors['products'] = f'Недопустимый первичный ключ "{item.get("product")}"'
-                    break
-                try:
-                    quantity = int(item['quantity'])
-                    if quantity <= 0:
-                        raise ValueError
-                except (ValueError, TypeError):
-                    errors['products'] = f'Недопустимое количество для товара #{index+1}.'
-                    break
-
-    for field in ['firstname', 'lastname', 'phonenumber', 'address']:
-        if field not in order_details:
-            errors[field] = 'Обязательное поле.'
-            continue
-
-        value = order_details[field]
-
-        if value is None or not isinstance(value, str) or not value.strip():
-            errors[field] = 'Это поле не может быть пустым.'
-
-    phonenumber = order_details.get('phonenumber')
-    if isinstance(phonenumber, str) and not re.fullmatch(r'\+79\d{9}', phonenumber.strip()):
-        errors['phonenumber'] = 'Введен некорректный номер телефона.'
-
-    if errors:
-        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+    validated = serializer.validated_data
 
     order = Order.objects.create(
-        firstname=order_details['firstname'].strip(),
-        lastname=order_details['lastname'].strip(),
-        phonenumber=phonenumber.strip(),
-        address=order_details['address'].strip()
+        firstname=validated['firstname'].strip(),
+        lastname=validated['lastname'].strip(),
+        phonenumber=validated['phonenumber'].strip(),
+        address=validated['address'].strip()
     )
 
-    for item in order_details['products']:
-        product = Product.objects.get(id=item['product'])
+    for item in validated['products']:
         OrderItem.objects.create(
             order=order,
-            product=product,
+            product=item['product'],
             quantity=item['quantity']
         )
 
