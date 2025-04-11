@@ -145,6 +145,10 @@ class Order(models.Model):
         DELIVERING = 'delivering', 'Доставляется'
         COMPLETED = 'completed', 'Завершён'
 
+    class PaymentMethod(models.TextChoices):
+        CASH = 'cash', 'Наличные'
+        CARD = 'card', 'Карта'
+
     firstname = models.CharField('Имя', max_length=100)
     lastname = models.CharField('Фамилия', max_length=100)
     phonenumber = PhoneNumberField('Телефон')
@@ -174,6 +178,14 @@ class Order(models.Model):
         'Дата доставки',
         blank=True,
         null=True
+    )
+
+    payment_method = models.CharField(
+        'Способ оплаты',
+        max_length=20,
+        choices=PaymentMethod.choices,
+        default=PaymentMethod.CASH,
+        db_index=True,
     )
 
     objects = OrderQuerySet.as_manager()

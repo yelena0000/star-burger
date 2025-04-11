@@ -117,6 +117,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    readonly_fields = ['created_at']
     list_display = [
         'id',
         'firstname',
@@ -125,8 +126,8 @@ class OrderAdmin(admin.ModelAdmin):
         'address',
         'created_at',
         'status',
+        'payment_method',
     ]
-    readonly_fields = ['created_at']
     list_filter = ['status']
     inlines = [OrderItemInline]
 
