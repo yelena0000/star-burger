@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal
 from django.db import models
 from django.db.models import Sum, F, DecimalField
@@ -155,7 +156,25 @@ class Order(models.Model):
         default=OrderStatus.NEW,
         db_index=True,
     )
-    comment = models.TextField('Комментарий', blank=True)
+    comment = models.TextField(
+        'Комментарий',
+        blank=True
+    )
+    created_at = models.DateTimeField(
+        'Дата и время создания',
+        auto_now_add=True,
+        db_index=True
+    )
+    call_at = models.DateTimeField(
+        'Дата звонка',
+        blank=True,
+        null=True
+    )
+    deliver_at = models.DateTimeField(
+        'Дата доставки',
+        blank=True,
+        null=True
+    )
 
     objects = OrderQuerySet.as_manager()
 
