@@ -11,53 +11,62 @@
   <br/>
   <br/>
   <div class="container">
-   <table class="table table-responsive">
-    <tr>
-      <th>ID заказа</th>
-      <th>Статус</th>
-      <th>Способ оплаты</th>
-      <th>Стоимость заказа</th>
-      <th>Клиент</th>
-      <th>Телефон</th>
-      <th>Адрес доставки</th>
-      <th>Комментарий</th>
-      <th>Рестораны</th>
-      <th>Ссылка на админку</th>
-    </tr>
-
-    {% for order_with_restaurants in orders_with_restaurants %}
+    <table class="table table-responsive">
       <tr>
-        <td>{{ order_with_restaurants.order.id }}</td>
-        <td>{{ order_with_restaurants.order.get_status_display }}</td>
-        <td>{{ order_with_restaurants.order.get_payment_method_display }}</td>
-        <td>{{ order_with_restaurants.order.total_price }} ₽</td>
-        <td>{{ order_with_restaurants.order.firstname }} {{ order_with_restaurants.order.lastname }}</td>
-        <td>{{ order_with_restaurants.order.phonenumber }}</td>
-        <td>{{ order_with_restaurants.order.address }}</td>
-        <td>{{ order_with_restaurants.order.comment }}</td>
-        <td>
-          {% if order_with_restaurants.order.assigned_restaurant %}
-            Готовит ресторан {{ order_with_restaurants.order.assigned_restaurant.name }}
-          {% else %}
-            <details>
-              <summary>Может быть приготовлен ресторанами:</summary>
-              <ul>
-                {% for restaurant in order_with_restaurants.restaurants %}
-                  <li>{{ restaurant.name }}</li>
-                {% empty %}
-                  <li>Нет доступных ресторанов для всех товаров</li>
-                {% endfor %}
-              </ul>
-            </details>
-          {% endif %}
-        </td>
-        <td>
-          {% with return_url=request.get_full_path %}
-            <a href="{% url 'admin:foodcartapp_order_change' order_with_restaurants.order.id %}?next={{ return_url|urlencode }}">Редактировать</a>
-          {% endwith %}
-        </td>
+        <th>ID заказа</th>
+        <th>Статус</th>
+        <th>Способ оплаты</th>
+        <th>Стоимость заказа</th>
+        <th>Клиент</th>
+        <th>Телефон</th>
+        <th>Адрес доставки</th>
+        <th>Комментарий</th>
+        <th>Рестораны</th>
+        <th>Ссылка на админку</th>
       </tr>
-    {% endfor %}
-   </table>
+
+      {% for order_with_restaurants in orders_with_restaurants %}
+        {% with order=order_with_restaurants.order %}
+          <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.get_status_display }}</td>
+            <td>{{ order.get_payment_method_display }}</td>
+            <td>{{ order.total_price }} ₽</td>
+            <td>{{ order.firstname }} {{ order.lastname }}</td>
+            <td>{{ order.phonenumber }}</td>
+            <td>{{ order.address }}</td>
+            <td>{{ order.comment }}</td>
+            <td>
+              {% if order.assigned_restaurant %}
+                <strong>Готовит:</strong> {{ order.assigned_restaurant.name }}
+              {% else %}
+                <details>
+                  <summary>Может быть приготовлен ресторанами:</summary>
+                  <ul>
+                    {% for restaurant in order_with_restaurants.restaurants %}
+                      <li>
+                        {{ restaurant.restaurant.name }}
+                        {% if restaurant.distance is not None %}
+                          ({{ restaurant.distance }} км)
+                        {% else %}
+                          (расстояние неизвестно)
+                        {% endif %}
+                      </li>
+                    {% empty %}
+                      <li>Нет доступных ресторанов для всех товаров</li>
+                    {% endfor %}
+                  </ul>
+                </details>
+              {% endif %}
+            </td>
+            <td>
+              {% with return_url=request.get_full_path %}
+                <a href="{% url 'admin:foodcartapp_order_change' order.id %}?next={{ return_url|urlencode }}">Редактировать</a>
+              {% endwith %}
+            </td>
+          </tr>
+        {% endwith %}
+      {% endfor %}
+    </table>
   </div>
 {% endblock %}
