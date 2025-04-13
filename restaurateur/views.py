@@ -1,4 +1,3 @@
-from environs import Env
 from geopy.distance import distance
 import requests
 from requests.exceptions import RequestException
@@ -7,6 +6,7 @@ from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
 from django.urls import reverse_lazy
+from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
@@ -15,6 +15,8 @@ from django.contrib.auth import views as auth_views
 from foodcartapp.models import Order
 from foodcartapp.models import Product
 from foodcartapp.models import Restaurant
+from geolocation.models import Place
+from geolocation.utils import fetch_coordinates
 
 
 class Login(forms.Form):
@@ -96,24 +98,6 @@ def view_restaurants(request):
     })
 
 
-def fetch_coordinates(apikey, address):
-    base_url = "https://geocode-maps.yandex.ru/1.x"
-    response = requests.get(base_url, params={
-        "geocode": address,
-        "apikey": apikey,
-        "format": "json",
-    })
-    response.raise_for_status()
-    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-
-    if not found_places:
-        return None
-
-    most_relevant = found_places[0]
-    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-    return lon, lat
-
-
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = (
@@ -124,9 +108,44 @@ def view_orders(request):
         .prefetch_related('items__product')
     )
 
-    env = Env()
-    env.read_env()
-    geocoder_apikey = env.str('YANDEX_GEOCODER_API_KEY')
+    geocoder_apikey = settings.YANDEX_GEOCODER_API_KEY
+
+    addresses = set()
+    for order in orders:
+        addresses.add(order.address)
+
+    all_restaurants = list(Restaurant.objects.all())
+    for restaurant in all_restaurants:
+        addresses.add(restaurant.address)
+
+    places = Place.objects.filter(address__in=addresses)
+    coordinates_cache = {place.address: (place.latitude, place.longitude) for place in places}
+
+    def get_coordinates(address):
+        if address in coordinates_cache:
+            return coordinates_cache[address]
+
+        try:
+            coords = fetch_coordinates(geocoder_apikey, address)
+            if coords:
+                lat, lon = coords[1], coords[0]
+                coordinates_cache[address] = (lat, lon)
+
+                Place.objects.update_or_create(
+                    address=address,
+                    defaults={
+                        'latitude': lat,
+                        'longitude': lon,
+                    }
+                )
+                return (lat, lon)
+
+            coordinates_cache[address] = None
+            return None
+
+        except (RequestException, ValueError) as e:
+            coordinates_cache[address] = None
+            return None
 
     orders_with_restaurants = []
 
@@ -140,33 +159,37 @@ def view_orders(request):
 
         valid_restaurants = []
 
-        try:
-            order_coords = fetch_coordinates(geocoder_apikey, order.address)
-        except (RequestException, ValueError):
-            order_coords = None
+        order_coords = get_coordinates(order.address)
 
         for restaurant in available_restaurants:
             can_prepare_all = all(
-                restaurant.menu_items.filter(product=item.product, availability=True).exists()
+                restaurant.menu_items.filter(
+                    product=item.product,
+                    availability=True
+                ).exists()
                 for item in order_products
             )
             if not can_prepare_all:
                 continue
 
-            try:
-                rest_coords = fetch_coordinates(geocoder_apikey, restaurant.address)
-                if not order_coords or not rest_coords:
-                    raise ValueError("Invalid coordinates")
+            rest_coords = get_coordinates(restaurant.address)
 
-                dist = distance(
-                    (order_coords[1], order_coords[0]),
-                    (rest_coords[1], rest_coords[0])
-                ).km
-                valid_restaurants.append({
-                    'restaurant': restaurant,
-                    'distance': round(dist, 1)
-                })
-            except (RequestException, ValueError):
+            if order_coords and rest_coords:
+                try:
+                    dist = distance(
+                        order_coords,
+                        rest_coords
+                    ).km
+                    valid_restaurants.append({
+                        'restaurant': restaurant,
+                        'distance': round(dist, 1)
+                    })
+                except Exception as e:
+                    valid_restaurants.append({
+                        'restaurant': restaurant,
+                        'distance': None
+                    })
+            else:
                 valid_restaurants.append({
                     'restaurant': restaurant,
                     'distance': None
@@ -174,7 +197,7 @@ def view_orders(request):
 
         sorted_restaurants = sorted(
             valid_restaurants,
-            key=lambda rest: rest['distance'] if rest['distance'] is not None else float('inf')
+            key=lambda x: x['distance'] if x['distance'] is not None else float('inf')
         )
 
         orders_with_restaurants.append({
@@ -182,6 +205,6 @@ def view_orders(request):
             'restaurants': sorted_restaurants,
         })
 
-    return render(request, 'order_items.html', context={
+    return render(request, 'order_items.html', {
         'orders_with_restaurants': orders_with_restaurants,
     })
