@@ -1,22 +1,20 @@
 from geopy.distance import distance
-import requests
-from requests.exceptions import RequestException
 
 from django import forms
-from django.shortcuts import redirect, render
-from django.views import View
-from django.urls import reverse_lazy
 from django.conf import settings
-from django.contrib.auth.decorators import user_passes_test
-
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import redirect, render
+from django.urls import reverse_lazy
+from django.views import View
 
 from foodcartapp.models import Order
 from foodcartapp.models import Product
 from foodcartapp.models import Restaurant
+
 from geolocation.models import Place
-from geolocation.utils import fetch_coordinates
+from geolocation.utils import resolve_coordinates
 
 
 class Login(forms.Form):
@@ -121,32 +119,6 @@ def view_orders(request):
     places = Place.objects.filter(address__in=addresses)
     coordinates_cache = {place.address: (place.latitude, place.longitude) for place in places}
 
-    def get_coordinates(address):
-        if address in coordinates_cache:
-            return coordinates_cache[address]
-
-        try:
-            coords = fetch_coordinates(geocoder_apikey, address)
-            if coords:
-                lat, lon = coords[1], coords[0]
-                coordinates_cache[address] = (lat, lon)
-
-                Place.objects.update_or_create(
-                    address=address,
-                    defaults={
-                        'latitude': lat,
-                        'longitude': lon,
-                    }
-                )
-                return (lat, lon)
-
-            coordinates_cache[address] = None
-            return None
-
-        except (RequestException, ValueError) as e:
-            coordinates_cache[address] = None
-            return None
-
     orders_with_restaurants = []
 
     for order in orders:
@@ -159,7 +131,7 @@ def view_orders(request):
 
         valid_restaurants = []
 
-        order_coords = get_coordinates(order.address)
+        order_coords = resolve_coordinates(order.address, geocoder_apikey, coordinates_cache)
 
         for restaurant in available_restaurants:
             can_prepare_all = all(
@@ -172,7 +144,7 @@ def view_orders(request):
             if not can_prepare_all:
                 continue
 
-            rest_coords = get_coordinates(restaurant.address)
+            rest_coords = resolve_coordinates(restaurant.address, geocoder_apikey, coordinates_cache)
 
             if order_coords and rest_coords:
                 try:
