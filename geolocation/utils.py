@@ -31,7 +31,7 @@ def fetch_coordinates_from_api(apikey, address):
 
         return lon, lat
 
-    except (RequestException, ValueError)  as e:
+    except (RequestException, ValueError) as e:
         return None
 
 
@@ -61,7 +61,7 @@ def resolve_coordinates(address, apikey, cache=None):
             address=address,
             defaults={
                 'longitude': lon,
-                'latitude': lat,
+                'latitude': lat
             }
         )
         coords = (lat, lon)
