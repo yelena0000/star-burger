@@ -12,9 +12,7 @@ from django.views import View
 from foodcartapp.models import Order
 from foodcartapp.models import Product
 from foodcartapp.models import Restaurant
-
 from geolocation.models import Place
-from geolocation.utils import resolve_coordinates
 
 
 class Login(forms.Form):
@@ -76,8 +74,12 @@ def view_products(request):
 
     products_with_restaurant_availability = []
     for product in products:
-        availability = {item.restaurant_id: item.availability for item in product.menu_items.all()}
-        ordered_availability = [availability.get(restaurant.id, False) for restaurant in restaurants]
+        availability = {
+            item.restaurant_id: item.availability for item in product.menu_items.all()
+        }
+        ordered_availability = [
+            availability.get(restaurant.id, False) for restaurant in restaurants
+        ]
 
         products_with_restaurant_availability.append(
             (product, ordered_availability)
@@ -106,8 +108,6 @@ def view_orders(request):
         .prefetch_related('items__product')
     )
 
-    geocoder_apikey = settings.YANDEX_GEOCODER_API_KEY
-
     addresses = set()
     for order in orders:
         addresses.add(order.address)
@@ -117,7 +117,10 @@ def view_orders(request):
         addresses.add(restaurant.address)
 
     places = Place.objects.filter(address__in=addresses)
-    coordinates_cache = {place.address: (place.latitude, place.longitude) for place in places}
+    coordinates_cache = {
+        place.address: (place.latitude, place.longitude)
+        for place in places
+    }
 
     orders_with_restaurants = []
 
@@ -131,7 +134,7 @@ def view_orders(request):
 
         valid_restaurants = []
 
-        order_coords = resolve_coordinates(order.address, geocoder_apikey, coordinates_cache)
+        order_coords = coordinates_cache.get(order.address)
 
         for restaurant in available_restaurants:
             can_prepare_all = all(
@@ -144,19 +147,16 @@ def view_orders(request):
             if not can_prepare_all:
                 continue
 
-            rest_coords = resolve_coordinates(restaurant.address, geocoder_apikey, coordinates_cache)
+            rest_coords = coordinates_cache.get(restaurant.address)
 
             if order_coords and rest_coords:
                 try:
-                    dist = distance(
-                        order_coords,
-                        rest_coords
-                    ).km
+                    dist = distance(order_coords, rest_coords).km
                     valid_restaurants.append({
                         'restaurant': restaurant,
                         'distance': round(dist, 1)
                     })
-                except Exception as e:
+                except Exception:
                     valid_restaurants.append({
                         'restaurant': restaurant,
                         'distance': None
