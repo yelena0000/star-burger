@@ -1,16 +1,15 @@
-import json
-import re
+from django.conf import settings
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
-from django.views.decorators.csrf import csrf_exempt
+
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from geolocation.models import Place
+from geolocation.utils import resolve_coordinates
 
-from .models import Order
-from .models import OrderItem
 from .models import Product
 from .serializers import OrderSerializer
 from .serializers import RegisterOrderSerializer
@@ -74,23 +73,23 @@ def register_order(request):
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    validated = serializer.validated_data
-
     try:
         with transaction.atomic():
-            order = Order.objects.create(
-                firstname=validated['firstname'].strip(),
-                lastname=validated['lastname'].strip(),
-                phonenumber=validated['phonenumber'].strip(),
-                address=validated['address'].strip()
-            )
+            order = serializer.save()
 
-            for item in validated['products']:
-                OrderItem.objects.create(
-                    order=order,
-                    product=item['product'],
-                    quantity=item['quantity'],
-                    price=item['product'].price
+            address = order.address
+            place = Place.objects.filter(address=address).first()
+
+            if not place or place.latitude is None or place.longitude is None:
+                coords = resolve_coordinates(address, settings.YANDEX_GEOCODER_API_KEY)
+                latitude, longitude = coords if coords else (None, None)
+
+                Place.objects.update_or_create(
+                    address=address,
+                    defaults={
+                        'latitude': latitude,
+                        'longitude': longitude
+                    }
                 )
 
     except Exception as error:
