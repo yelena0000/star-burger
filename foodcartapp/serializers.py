@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from phonenumber_field.serializerfields import PhoneNumberField
+from django.conf import settings
 
 from .models import Order, OrderItem, Product
+from geolocation.models import Place
+from geolocation.utils import resolve_coordinates
 
 
 class OrderProductSerializer(serializers.Serializer):
@@ -30,6 +33,19 @@ class RegisterOrderSerializer(serializers.ModelSerializer):
             for item in products_data
         ]
         OrderItem.objects.bulk_create(order_items)
+
+        address = order.address
+        place = Place.objects.filter(address=address).first()
+        if not place or place.latitude is None or place.longitude is None:
+            coords = resolve_coordinates(address, settings.YANDEX_GEOCODER_API_KEY)
+            latitude, longitude = coords if coords else (None, None)
+            Place.objects.update_or_create(
+                address=address,
+                defaults={
+                    'latitude': latitude,
+                    'longitude': longitude
+                }
+            )
 
         return order
 

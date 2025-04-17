@@ -1,14 +1,10 @@
-from django.conf import settings
-from django.db import transaction
-from django.http import JsonResponse
 from django.templatetags.static import static
+from django.http import JsonResponse
+from django.db import transaction
 
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
-from geolocation.models import Place
-from geolocation.utils import resolve_coordinates
 
 from .models import Product
 from .serializers import OrderSerializer
@@ -76,22 +72,6 @@ def register_order(request):
     try:
         with transaction.atomic():
             order = serializer.save()
-
-            address = order.address
-            place = Place.objects.filter(address=address).first()
-
-            if not place or place.latitude is None or place.longitude is None:
-                coords = resolve_coordinates(address, settings.YANDEX_GEOCODER_API_KEY)
-                latitude, longitude = coords if coords else (None, None)
-
-                Place.objects.update_or_create(
-                    address=address,
-                    defaults={
-                        'latitude': latitude,
-                        'longitude': longitude
-                    }
-                )
-
     except Exception as error:
         return Response({'error': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
