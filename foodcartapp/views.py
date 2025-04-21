@@ -64,16 +64,10 @@ def product_list_api(request):
 
 
 @api_view(['POST'])
+@transaction.atomic
 def register_order(request):
     serializer = RegisterOrderSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        with transaction.atomic():
-            order = serializer.save()
-    except Exception as error:
-        return Response({'error': str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    serializer.is_valid(raise_exception=True)
+    order = serializer.save()
     response_serializer = OrderSerializer(order)
     return Response(response_serializer.data, status=status.HTTP_201_CREATED)
