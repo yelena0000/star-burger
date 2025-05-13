@@ -21,7 +21,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', False)
 
 ROLLBAR = {
-    'access_token': env('ROLLBAR_ACCESS_TOKEN'),
+    'access_token': env('ROLLBAR_ACCESS_TOKEN', ''),
     'environment': ENVIRONMENT,
     'branch': 'master',
     'root': BASE_DIR,
