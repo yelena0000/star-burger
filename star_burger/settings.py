@@ -13,12 +13,20 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 ENVIRONMENT = env.str('ENVIRONMENT', 'development')
 
-STATIC_ROOT = '/var/www/frontend/'
+
 STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
 
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', False)
+
+if DEBUG:
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    STATIC_ROOT = '/var/www/frontend/'
+    MEDIA_ROOT = '/var/www/media'
 
 ROLLBAR = {
     'access_token': env('ROLLBAR_ACCESS_TOKEN', ''),
@@ -94,8 +102,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'star_burger.wsgi.application'
 
-MEDIA_ROOT = '/var/www/media'
-MEDIA_URL = '/media/'
 
 DATABASES = {
     'default': dj_database_url.config(
