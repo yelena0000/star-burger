@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "parcel build bundles-src/index.js --dist-dir dist --public-url='./'"
+    "build": "parcel build bundles-src/index.js --dist-dir bundles --public-url='./'"
   },
   "dependencies": {
     "@babel/plugin-proposal-class-properties": "^7.16.7",
