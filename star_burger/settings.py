@@ -142,10 +142,13 @@ INTERNAL_IPS = [
 ]
 
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "assets"),
-    os.path.join(BASE_DIR, "bundles"),
-]
+if DEBUG:
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "assets"),
+        os.path.join(BASE_DIR, "bundles"),
+    ]
+else:
+    STATICFILES_DIRS = []
 
 
 rollbar.init(**ROLLBAR)
