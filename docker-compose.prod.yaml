@@ -15,7 +15,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     volumes:
-      - /var/www/frontend:/app/dist
+      - /var/www/frontend:/app/bundles
   db:
     image: postgres:13
     volumes:
