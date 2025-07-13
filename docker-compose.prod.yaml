@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /var/www/media:/app/media
+    env_file:
+      - .env
+    depends_on:
+      - frontend
+      - db
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    volumes:
+      - /var/www/frontend:/app/dist
+  db:
+    image: postgres:13
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+volumes:
+  db_data:
