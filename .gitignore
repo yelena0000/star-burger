@@ -3,6 +3,7 @@ node_modules/
 media/
 static/
 
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -147,3 +148,5 @@ cython_debug/
 .idea
 
 clean_dump_full.json
+
+bundles/
