@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - /var/www/media:/app/media
+      - /opt/star-burger/staticfiles:/app/staticfiles
+      - /opt/star-burger/bundles:/app/bundles
     env_file:
       - .env
     depends_on:
