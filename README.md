@@ -157,3 +157,29 @@ ROLLBAR_ACCESS_TOKEN=ваш_токен_rollbar
 
 ## Цели проекта
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте Devman. За основу взят код проекта FoodCart.
+
+## Важно для деплоя
+- После каждой сборки и команды `collectstatic` статика Django (включая админку) копируется в `/var/www/frontend/`, чтобы nginx мог корректно раздавать все статические файлы.
+- Убедитесь, что папки `/var/www/frontend` и `/var/www/media` существуют на сервере и доступны для записи пользователю, под которым выполняется деплой.
+
+## Как работает деплой
+1. Очищаются временные папки (`/opt/star-burger/bundles`, `/var/www/frontend/`).
+2. Собираются и запускаются контейнеры через `docker-compose.prod.yaml`.
+3. Копируются бандлы фронта из контейнера frontend в `/opt/star-burger/bundles`, затем в `/var/www/frontend/`.
+4. Применяются миграции и собирается статика Django (`collectstatic`).
+5. Вся статика Django копируется из контейнера backend в `/var/www/frontend/` (см. скрипт `deploy.sh`).
+6. Перезапускается nginx.
+
+## Пример ручного копирования статики Django (если нужно)
+```sh
+# После collectstatic
+sudo docker cp $(docker-compose -f docker-compose.prod.yaml ps -q backend):/app/staticfiles/. /var/www/frontend/
+```
+
+## Требования к папкам
+Перед деплоем убедитесь, что папки для статики и media созданы:
+```sh
+sudo mkdir -p /var/www/frontend
+sudo mkdir -p /var/www/media
+sudo chmod -R 755 /var/www/frontend /var/www/media
+```

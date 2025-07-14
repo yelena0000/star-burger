@@ -16,6 +16,9 @@ echo "[deploy] Применяю миграции и собираю статик�
 docker-compose -f docker-compose.prod.yaml run backend python manage.py migrate
 docker-compose -f docker-compose.prod.yaml exec backend python manage.py collectstatic --noinput
 
+echo "[deploy] Копирую статику Django в /var/www/frontend..."
+docker cp $(docker-compose -f docker-compose.prod.yaml ps -q backend):/app/staticfiles/. /var/www/frontend/
+
 echo "[deploy] Копирую файлы бандлов в /var/www/frontend..."
 sudo cp -r /opt/star-burger/bundles/* /var/www/frontend/
 

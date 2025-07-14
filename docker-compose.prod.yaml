@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - /var/www/media:/app/media
+      - /var/www/frontend:/app/staticfiles
     env_file:
       - .env
     depends_on:
