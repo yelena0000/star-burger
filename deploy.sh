@@ -9,8 +9,8 @@ sudo rm -rf /var/www/frontend/*
 docker-compose -f docker-compose.prod.yaml down
 docker-compose -f docker-compose.prod.yaml up --build -d
 
-echo "[deploy] Копирую бандлы из контейнера..."
-docker cp $(docker-compose -f docker-compose.prod.yaml ps -q frontend):/app/bundles /opt/star-burger/bundles
+#echo "[deploy] Копирую бандлы из контейнера..."
+#docker cp $(docker-compose -f docker-compose.prod.yaml ps -q frontend):/app/bundles /opt/star-burger/bundles
 
 echo "[deploy] Применяю миграции и собираю статику..."
 docker-compose -f docker-compose.prod.yaml run backend python manage.py migrate
