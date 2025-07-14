@@ -2,10 +2,6 @@
 cd /opt/star-burger
 git pull
 
-echo "[deploy] Очищаю временные папки..."
-sudo rm -rf /var/www/frontend/*
-sudo mkdir -p /var/www/frontend
-
 echo "[deploy] Запускаю сборку контейнеров..."
 docker-compose -f docker-compose.prod.yaml down
 docker-compose -f docker-compose.prod.yaml up --build -d
