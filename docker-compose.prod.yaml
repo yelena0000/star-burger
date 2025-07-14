@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     volumes:
-      - /var/www/frontend:/var/www/frontend
+      - /var/www/frontend:/app/bundles
     restart: unless-stopped
 
   db:
