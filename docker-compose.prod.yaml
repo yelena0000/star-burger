@@ -12,15 +12,18 @@ services:
       - db
     ports:
       - "8000:8000"
+    restart: unless-stopped
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+    restart: unless-stopped
   db:
     image: postgres:13
     volumes:
       - db_data:/var/lib/postgresql/data
     env_file:
       - .env
+    restart: unless-stopped
 volumes:
   db_data:
