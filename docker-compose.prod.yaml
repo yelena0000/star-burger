@@ -18,6 +18,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+    volumes:
+      - /opt/star-burger/bundles:/app/bundles
     restart: unless-stopped
   db:
     image: postgres:13
