@@ -14,13 +14,15 @@ services:
     ports:
       - "8000:8000"
     restart: unless-stopped
+
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     volumes:
-      - /opt/star-burger/bundles:/app/bundles
+      - /var/www/frontend:/var/www/frontend
     restart: unless-stopped
+
   db:
     image: postgres:13
     volumes:
@@ -28,5 +30,6 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+
 volumes:
   db_data:

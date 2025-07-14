@@ -15,6 +15,7 @@ services:
     depends_on:
       - frontend
       - db
+
   frontend:
     build:
       context: .
@@ -23,11 +24,13 @@ services:
       - ./bundles:/app/bundles
     ports:
       - "3000:3000"
+
   db:
     image: postgres:13
     volumes:
       - db_data:/var/lib/postgresql/data
     env_file:
       - .env
+
 volumes:
   db_data:

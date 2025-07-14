@@ -3,8 +3,6 @@ cd /opt/star-burger
 git pull
 
 echo "[deploy] Очищаю временные папки..."
-sudo rm -rf /opt/star-burger/bundles
-sudo mkdir -p /opt/star-burger/bundles
 sudo rm -rf /var/www/frontend/*
 sudo mkdir -p /var/www/frontend
 
@@ -13,10 +11,7 @@ docker-compose -f docker-compose.prod.yaml down
 docker-compose -f docker-compose.prod.yaml up --build -d
 
 echo "[deploy] Жду завершения сборки фронтенда..."
-sleep 10
-
-echo "[deploy] Копирую файлы бандлов в /var/www/frontend..."
-sudo cp -r /opt/star-burger/bundles/* /var/www/frontend/
+sleep 5
 
 echo "[deploy] Применяю миграции и собираю статику..."
 docker-compose -f docker-compose.prod.yaml exec backend python manage.py migrate
