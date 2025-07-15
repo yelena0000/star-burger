@@ -25,8 +25,8 @@ if DEBUG:
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 else:
-    STATIC_ROOT = '/var/www/frontend/'
-    MEDIA_ROOT = '/var/www/media'
+    STATIC_ROOT = '/app/staticfiles'
+    MEDIA_ROOT = '/app/media'
 
 ROLLBAR = {
     'access_token': env('ROLLBAR_ACCESS_TOKEN', ''),
