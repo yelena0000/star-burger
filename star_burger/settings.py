@@ -148,7 +148,9 @@ if DEBUG:
         os.path.join(BASE_DIR, "bundles"),
     ]
 else:
-    STATICFILES_DIRS = []
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "assets"),
+    ]
 
 
 rollbar.init(**ROLLBAR)
