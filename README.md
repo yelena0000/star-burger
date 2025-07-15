@@ -66,98 +66,48 @@ server {
    - Получите сертификат: `sudo certbot --nginx -d your-domain.com -m your-email@example.com --agree-tos --non-interactive`.
    - Настройте редирект HTTP → HTTPS в конфиге Nginx при необходимости.
 
-## Как запустить dev-версию сайта
-Для разработки сайта нужно запустить бэкенд и фронтенд одновременно. Используйте два терминала.
+## Быстрый старт (локально)
 
-### Требования
-- Python версии 3.6 или выше.
-- Node.js версии не старше 17.6.0 (рекомендуется 16.16.0).
-- Docker и Docker Compose.
-
-### Шаги
-1. Склонируйте репозиторий:
+1. Клонируйте репозиторий и перейдите в папку проекта:
    ```sh
    git clone https://github.com/yelena0000/star-burger.git
    cd star-burger
    ```
-2. Настройте переменные окружения:
-   - Создайте файл `.env` в корне проекта:
-     ```env
-     SECRET_KEY=django-insecure-0if40nf4nf93n4
-     YANDEX_GEOCODER_API_KEY=ваш_ключ_от_яндекса
-     DEBUG=True
-     ALLOWED_HOSTS=127.0.0.1,localhost
-     DATABASE_URL=postgres://user:password@localhost:5432/dbname
-     ```
-   - Для локальной БД настройте PostgreSQL и обновите `DATABASE_URL`.
+2. Создайте файл `.env` в корне проекта со следующим содержимым:
+   ```env
+   SECRET_KEY=django-insecure-0if40nf4nf93n4
+   YANDEX_GEOCODER_API_KEY=ваш_ключ_от_яндекса
+   DEBUG=True
+   ALLOWED_HOSTS=127.0.0.1,localhost
+   DATABASE_URL=postgres://user:password@localhost:5432/dbname
+   ```
 3. Запустите проект:
    ```sh
    docker-compose up --build
    ```
-   - Бэкенд будет доступен на http://localhost:8000.
-   - Фронтенд будет доступен на http://localhost:3000 (для отладки, но в dev-режиме используется бэкенд).
-4. Проверка:
-   - Откройте http://localhost:8000 в браузере.
-   - Если статика не загружается, сбросьте кэш браузера (Ctrl-F5).
 
-## Как запустить prod-версию сайта
-Сайт развертывается на сервере с использованием Docker и Nginx. Следуйте инструкциям для деплоя.
+## Деплой на сервер
 
-### Требования
-- Сервер с установленным Docker, Docker Compose, Nginx и Certbot.
-- Доступ по SSH (например, root@your-server-ip).
-- Домен, привязанный к IP сервера через A-запись.
-
-### Настройка переменных окружения
-Создайте файл `.env` в директории проекта на сервере (например, `/opt/star-burger/`):
-```env
-SECRET_KEY=django-insecure-0if40nf4nf93n4
-YANDEX_GEOCODER_API_KEY=ваш_ключ_от_яндекса
-DEBUG=False
-ALLOWED_HOSTS=your-domain.com
-DATABASE_URL=postgres://user:password@db:5432/dbname
-ROLLBAR_ACCESS_TOKEN=ваш_токен_rollbar
-```
-
-### Деплой на сервер
-1. Подключитесь к серверу:
+1. Установите Docker, Docker Compose, Nginx, Certbot.
+2. Создайте папки для статики и медиа:
    ```sh
-   ssh root@your-server-ip
+   sudo mkdir -p /var/www/frontend /var/www/media
+   sudo chmod -R 755 /var/www/frontend /var/www/media
    ```
-2. Перейдите в директорию проекта:
-   ```sh
-   cd /opt/star-burger
+3. Настройте Nginx (см. пример конфига выше).
+4. Создайте файл `.env` в директории проекта на сервере (например, `/opt/star-burger/`):
+   ```env
+   SECRET_KEY=django-insecure-0if40nf4nf93n4
+   YANDEX_GEOCODER_API_KEY=ваш_ключ_от_яндекса
+   DEBUG=False
+   ALLOWED_HOSTS=your-domain.com
+   DATABASE_URL=postgres://user:password@db:5432/dbname
+   ROLLBAR_ACCESS_TOKEN=ваш_токен_rollbar
    ```
-3. Выполните деплой:
+5. Выполните деплой:
    ```sh
    ./deploy.sh
    ```
-   - Скрипт обновит код, соберет контейнеры, применит миграции, скопирует бандлы и статику в `/var/www/frontend/`, и перезапустит Nginx.
-
-4. Проверка:
-   - Откройте http://your-domain.com в браузере.
-
-
-### Описание деплоя
-Процесс:
-- Очищает временные папки (`/opt/star-burger/bundles`, `/var/www/frontend/`).
-- Собирает фронтенд и бэкенд в контейнерах.
-- Копирует бандлы из контейнера frontend и статику из backend в `/opt/star-burger/`.
-- Копирует файлы в `/var/www/frontend/` для раздачи через Nginx.
-- Применяет миграции и перезапускает сервисы.
-
-
-## Мониторинг ошибок
-Интеграция с Rollbar позволяет:
-- Отслеживать ошибки в реальном времени.
-- Просматривать историю деплоев.
-- Связывать ошибки с версиями кода.
-
-Настройте `ROLLBAR_ACCESS_TOKEN` в `.env` для активации.
-
-## Цели проекта
-Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте Devman. За основу взят код проекта FoodCart.
-
 ## Важно для деплоя
 - После каждой сборки и команды `collectstatic` статика Django (включая админку) копируется в `/var/www/frontend/`, чтобы nginx мог корректно раздавать все статические файлы.
 - Убедитесь, что папки `/var/www/frontend` и `/var/www/media` существуют на сервере и доступны для записи пользователю, под которым выполняется деплой.
@@ -170,16 +120,15 @@ ROLLBAR_ACCESS_TOKEN=ваш_токен_rollbar
 5. Вся статика Django копируется из контейнера backend в `/var/www/frontend/` (см. скрипт `deploy.sh`).
 6. Перезапускается nginx.
 
-## Пример ручного копирования статики Django (если нужно)
-```sh
-# После collectstatic
-sudo docker cp $(docker-compose -f docker-compose.prod.yaml ps -q backend):/app/staticfiles/. /var/www/frontend/
-```
+## Мониторинг ошибок
+Интеграция с Rollbar позволяет:
+- Отслеживать ошибки в реальном времени.
+- Просматривать историю деплоев.
+- Связывать ошибки с версиями кода.
 
-## Требования к папкам
-Перед деплоем убедитесь, что папки для статики и media созданы:
-```sh
-sudo mkdir -p /var/www/frontend
-sudo mkdir -p /var/www/media
-sudo chmod -R 755 /var/www/frontend /var/www/media
-```
+Настройте `ROLLBAR_ACCESS_TOKEN` в `.env` для активации.
+
+## Цели проекта
+Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте Devman. За основу взят код проекта FoodCart.
+
+
