@@ -2,16 +2,23 @@
 cd /opt/star-burger
 git pull
 
-echo "[deploy] Запускаю сборку контейнеров..."
+echo "[deploy] Останавливаю контейнеры и очищаю статику..."
 docker-compose -f docker-compose.prod.yaml down
-docker-compose -f docker-compose.prod.yaml up --build -d
+sudo rm -rf /var/www/frontend/*
+sudo mkdir -p /var/www/frontend
+sudo chmod -R 755 /var/www/frontend
 
-echo "[deploy] Жду завершения сборки фронтенда..."
+echo "[deploy] Сначала собираю фронтенд..."
+docker-compose -f docker-compose.prod.yaml up --build -d frontend
+sleep 10
+
+echo "[deploy] Запускаю backend и применяю миграции..."
+docker-compose -f docker-compose.prod.yaml up --build -d backend db
 sleep 5
-
-echo "[deploy] Применяю миграции и собираю статику..."
 docker-compose -f docker-compose.prod.yaml exec backend python manage.py migrate
-docker-compose -f docker-compose.prod.yaml exec backend python manage.py collectstatic --noinput --clear
+
+echo "[deploy] Собираю статику Django (без --clear)..."
+docker-compose -f docker-compose.prod.yaml exec backend python manage.py collectstatic --noinput
 
 echo "[deploy] Перезапускаю nginx..."
 sudo systemctl restart nginx
