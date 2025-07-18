@@ -8,7 +8,7 @@ sudo rm -rf /var/www/frontend/*
 sudo mkdir -p /var/www/frontend
 sudo chmod -R 755 /var/www/frontend
 
-echo "[deploy] Сначала собираю фронтенд..."
+echo "[deploy] Собираю фронтенд..."
 docker-compose -f docker-compose.prod.yaml up --build -d frontend
 sleep 10
 
@@ -17,7 +17,7 @@ docker-compose -f docker-compose.prod.yaml up --build -d backend db
 sleep 5
 docker-compose -f docker-compose.prod.yaml exec backend python manage.py migrate
 
-echo "[deploy] Собираю статику Django (без --clear)..."
+echo "[deploy] Собираю статику Django..."
 docker-compose -f docker-compose.prod.yaml exec backend python manage.py collectstatic --noinput
 
 echo "[deploy] Перезапускаю nginx..."
