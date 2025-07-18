@@ -11,7 +11,7 @@ sleep 5
 
 echo "[deploy] Применяю миграции и собираю статику..."
 docker-compose -f docker-compose.prod.yaml exec backend python manage.py migrate
-docker-compose -f docker-compose.prod.yaml exec backend python manage.py collectstatic --noinput
+docker-compose -f docker-compose.prod.yaml exec backend python manage.py collectstatic --noinput --clear
 
 echo "[deploy] Перезапускаю nginx..."
 sudo systemctl restart nginx

@@ -66,14 +66,14 @@ server {
    - Получите сертификат: `sudo certbot --nginx -d your-domain.com -m your-email@example.com --agree-tos --non-interactive`.
    - Настройте редирект HTTP → HTTPS в конфиге Nginx при необходимости.
 
-## Быстрый старт (локально)
+# Быстрый старт (локально)
 
 1. Клонируйте репозиторий и перейдите в папку проекта:
    ```sh
    git clone https://github.com/yelena0000/star-burger.git
    cd star-burger
    ```
-2. Создайте файл `.env` в корне проекта со следующим содержимым:
+2. Создайте файл `.env` в папке backend/ со следующим содержимым:
    ```env
    SECRET_KEY=django-insecure-0if40nf4nf93n4
    YANDEX_GEOCODER_API_KEY=ваш_ключ_от_яндекса
@@ -86,7 +86,13 @@ server {
    docker-compose up --build
    ```
 
-## Деплой на сервер
+# Структура проекта
+
+- backend/ — Django-проект (manage.py, requirements.txt, приложения, статика, медиа, шаблоны)
+- frontend/ — фронтенд (package.json, исходники, ассеты, node_modules, bundles)
+- Dockerfile, Dockerfile.frontend, docker-compose.yaml, docker-compose.prod.yaml, deploy.sh — в корне
+
+# Деплой на сервер
 
 1. Установите Docker, Docker Compose, Nginx, Certbot.
 2. Создайте папки для статики и медиа:
@@ -95,7 +101,7 @@ server {
    sudo chmod -R 755 /var/www/frontend /var/www/media
    ```
 3. Настройте Nginx (см. пример конфига выше).
-4. Создайте файл `.env` в директории проекта на сервере (например, `/opt/star-burger/`):
+4. Создайте файл `.env` в папке backend/ на сервере:
    ```env
    SECRET_KEY=django-insecure-0if40nf4nf93n4
    YANDEX_GEOCODER_API_KEY=ваш_ключ_от_яндекса
@@ -108,17 +114,11 @@ server {
    ```sh
    ./deploy.sh
    ```
-## Важно для деплоя
-- После каждой сборки и команды `collectstatic` статика Django (включая админку) копируется в `/var/www/frontend/`, чтобы nginx мог корректно раздавать все статические файлы.
-- Убедитесь, что папки `/var/www/frontend` и `/var/www/media` существуют на сервере и доступны для записи пользователю, под которым выполняется деплой.
 
-## Как работает деплой
-1. Очищаются временные папки (`/opt/star-burger/bundles`, `/var/www/frontend/`).
-2. Собираются и запускаются контейнеры через `docker-compose.prod.yaml`.
-3. Копируются бандлы фронта из контейнера frontend в `/opt/star-burger/bundles`, затем в `/var/www/frontend/`.
-4. Применяются миграции и собирается статика Django (`collectstatic`).
-5. Вся статика Django копируется из контейнера backend в `/var/www/frontend/` (см. скрипт `deploy.sh`).
-6. Перезапускается nginx.
+# Как это работает
+- Все данные и media-файлы сохраняются благодаря volumes.
+- Статика и фронт собираются внутри контейнеров и автоматически попадают в нужные папки.
+- После перезапуска или пересоздания контейнеров данные не теряются.
 
 ## Мониторинг ошибок
 Интеграция с Rollbar позволяет:
