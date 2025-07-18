@@ -1,6 +1,6 @@
 FROM node:17.6.0
 WORKDIR /app
-COPY frontend/package.json .
+COPY package.json .
 RUN npm install
-COPY frontend/ .
+COPY . .
 CMD npm run build && npx serve -s bundles
