@@ -88,9 +88,10 @@ server {
 
 # Структура проекта
 
-- backend/ — Django-проект (manage.py, requirements.txt, приложения, статика, медиа, шаблоны)
-- frontend/ — фронтенд (package.json, исходники, ассеты, node_modules, bundles)
-- Dockerfile, Dockerfile.frontend, docker-compose.yaml, docker-compose.prod.yaml, deploy.sh — в корне
+- backend/ — Django-проект (manage.py, requirements.txt, приложения, статика, медиа, шаблоны, Dockerfile)
+- frontend/ — фронтенд (package.json, исходники, ассеты, node_modules, bundles, Dockerfile)
+- docker-compose.yaml, docker-compose.prod.yaml, deploy.sh — в корне
+
 
 # Деплой на сервер
 
