@@ -2,7 +2,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: ../Dockerfile
+      dockerfile: Dockerfile
     volumes:
       - /var/www/media:/app/media
       - /var/www/frontend:/app/staticfiles
@@ -18,7 +18,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: ../Dockerfile.frontend
+      dockerfile: Dockerfile
     volumes:
       - /var/www/frontend:/app/bundles
     restart: unless-stopped
